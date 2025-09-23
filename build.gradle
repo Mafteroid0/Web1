@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+}
+
+group = 'ru.mafteroid'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation files('./lib/fastcgi-lib.jar')
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'ru.mafteroid.Main'
+        )
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    archiveFileName = 'web1.jar'
+}
+
+test {
+    useJUnitPlatform()
+}
