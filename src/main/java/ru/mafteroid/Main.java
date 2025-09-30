@@ -1,17 +1,30 @@
 package ru.mafteroid;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-public class Main {
-    public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
-        }
+public class Main {
+    private static final int PORT = 9000;
+    private static final int THREAD_POOL_SIZE = 10;
+
+    public static void main(String[] args) {
+//        ExecutorService threadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+//
+//        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+//            System.out.println("FastCGI Java server listening on port " + PORT);
+//
+//            while (true) {
+//                Socket clientSocket = serverSocket.accept();
+//                threadPool.execute(new FastCGIHandler(clientSocket));
+//            }
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } finally {
+//            threadPool.shutdown();
+//        }
     }
 }
