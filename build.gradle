@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group = 'ru.mafteroid'
@@ -12,7 +13,7 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    implementation files('./lib/fastcgi-lib.jar')
+    implementation files('libs/fastcgi-lib.jar')
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -30,4 +31,9 @@ jar {
 
 test {
     useJUnitPlatform()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }

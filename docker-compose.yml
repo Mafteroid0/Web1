@@ -1,13 +1,13 @@
 services:
-  # Наше приложение
   fcgi:
     build:
       context: .
       dockerfile: Dockerfile
     networks:
       backend:
+    # Явно указываем hostname для корректного разрешения имени
+    hostname: fcgi
 
-  # Сам веб-сервер
   httpd:
     image: "httpd:2.4.62"
     ports:
@@ -17,5 +17,9 @@ services:
       - "./static:/var/www"
     networks:
       backend:
+    # Добавляем зависимость
+    depends_on:
+      - fcgi
+
 networks:
   backend:
