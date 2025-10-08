@@ -49,7 +49,7 @@ class Main {
                     try {
                         m = getValues(req);
                     } catch (Exception e) {
-                        sendError("Не ломайте пж GET запрос");
+                        sendError("Похоже кто-то пытается поломать запрос");
                         continue;
                     }
 
@@ -97,7 +97,7 @@ class Main {
         }
     }
 
-    private static LinkedHashMap<String, String> getValues(String inpString) {
+    private LinkedHashMap<String, String> getValues(String inpString) {
         String[] args = inpString.split("&");
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
         for (String s : args) {
@@ -109,13 +109,12 @@ class Main {
         return map;
     }
 
-    private static void sendResponse(boolean isShoot, String x, String y, String r, long wt) {
+    private void sendResponse(boolean isShoot, String x, String y, String r, long wt) {
         String content = """
                 {"result":"%s","x":"%s","y":"%s","r":"%s","time":"%s","workTime":"%s"}
                 """.formatted(isShoot, x, y, r, (double)(System.nanoTime() - wt) / 10000000,
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
 
-        // Для FastCGI используем только Content-Type, остальное обработает веб-сервер
         System.out.println("Content-Type: application/json; charset=utf-8");
         System.out.println("Status: 200 OK");
         System.out.println();
@@ -123,7 +122,7 @@ class Main {
         System.out.flush();
     }
 
-    private static void sendError(String msg) {
+    private void sendError(String msg) {
         String content = """
                 {"error":"%s"}
                 """.formatted(msg);
