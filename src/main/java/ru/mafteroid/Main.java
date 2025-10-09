@@ -10,15 +10,9 @@ import java.util.Objects;
 
 class Main {
     public static void main(String[] args) {
-        // Устанавливаем порт через системное свойство (можно передать через аргументы)
-        System.setProperty("FCGI_PORT", "1337");
         Main server = new Main();
-        server.run();
-
-
         System.out.println("Starting FastCGI server...");
-
-
+        server.run();
     }
 
     private void run(){
@@ -28,7 +22,6 @@ class Main {
 
         while (true) {
             try {
-                // Принимаем запрос через FCGIaccept()
                 int acceptResult = fcgiInterface.FCGIaccept();
 
                 if (acceptResult < 0) {
@@ -36,7 +29,7 @@ class Main {
                     continue;
                 }
 
-                // Теперь request должен быть инициализирован
+
                 String method = FCGIInterface.request.params.getProperty("REQUEST_METHOD");
                 if (method == null) {
                     sendError("Неподдерживаемый метод HTTP");
@@ -61,7 +54,7 @@ class Main {
                     }
 
                     boolean isShot;
-                    boolean isValid;
+
                     try {
                         if (m.size() != 3) {
                             throw new RuntimeException("Проверьте, что в вашем запросе только x,y,r");
@@ -71,18 +64,15 @@ class Main {
                         String yStr = m.get("y");
                         String rStr = m.get("r");
 
-                        // Валидация через Validator
                         String validationError = validator.validate(xStr, yStr, rStr);
                         if (validationError != null) {
                             throw new RuntimeException(validationError);
                         }
 
-                        // Конвертируем в float для checker.hit()
                         float x = Float.parseFloat(xStr);
                         float y = Float.parseFloat(yStr);
                         float r = Float.parseFloat(rStr);
 
-                        isValid = true;
                         isShot = checker.hit(x, y, r);
 
                     } catch (NumberFormatException e) {
@@ -96,9 +86,7 @@ class Main {
                         continue;
                     }
 
-                    if (isValid) {
-                        sendResponse(isShot, m.get("x"), m.get("y"), m.get("r"), time);
-                    }
+                    sendResponse(isShot, m.get("x"), m.get("y"), m.get("r"), time);
                 }
 
             } catch (InterruptedException e) {
@@ -116,30 +104,7 @@ class Main {
         }
     }
 
-
-    private boolean isSimpleValidNumber(String value) {
-        if (value == null || value.isEmpty()) {
-            return false;
-        }
-
-        // Проверяем базовый формат числа
-        if (!value.matches("-?\\d+(\\.\\d+)?")) {
-            return false;
-        }
-
-        // Отсекаем значения вроде 4.000000000000000000000000001
-        // Если после точки больше 6 знаков - считаем избыточной точностью
-        if (value.contains(".")) {
-            String decimalPart = value.split("\\.")[1];
-            if (decimalPart.length() > 6) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private LinkedHashMap<String, String> getValues(String queryString) throws Exception {
+    private LinkedHashMap<String, String> getValues(String queryString){
         LinkedHashMap<String, String> params = new LinkedHashMap<>();
         String[] pairs = queryString.split("&");
 
@@ -147,19 +112,13 @@ class Main {
             String[] keyValue = pair.split("=");
             if (keyValue.length == 2) {
                 String key = keyValue[0];
-                String value = keyValue[1]; // Просто берем значение как есть
+                String value = keyValue[1];
 
                 params.put(key, value);
             }
         }
 
         return params;
-    }
-
-    private boolean isValidNumberFormat(String value) {
-        // Разрешаем: целые числа, числа с плавающей точкой, отрицательные числа
-        // Запрещаем: научную нотацию, ведущие нули, избыточную точность
-        return value.matches("-?(?:0|[1-9]\\d*)(?:\\.\\d{1,15})?");
     }
 
     private void sendResponse(boolean isShoot, String x, String y, String r, long wt) {

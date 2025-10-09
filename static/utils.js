@@ -15,7 +15,6 @@ export function showNotification(message, isError = true) {
 
     const notification = document.createElement('div');
 
-    // Базовая стилизация уведомления
     notification.style.display = 'flex';
     notification.style.alignItems = 'center';
     notification.style.padding = '15px 20px';
@@ -33,14 +32,12 @@ export function showNotification(message, isError = true) {
     notification.style.transform = 'translateX(-20px)';
     notification.style.transition = 'all 0.3s ease';
 
-    // Создаем иконку (предполагаем, что картинки лежат в папке resources)
     const icon = document.createElement('img');
     icon.style.width = '20px';
     icon.style.height = '20px';
     icon.style.marginRight = '12px';
     icon.style.flexShrink = '0';
 
-    // Указываем локальные пути к картинкам
     if (isError) {
         icon.alt = "Ошибка";
         icon.src = "./resources/error.webp";
@@ -49,12 +46,10 @@ export function showNotification(message, isError = true) {
         icon.src = "./resources/success.webp";
     }
 
-    // Создаем текст
     const text = document.createElement('div');
     text.textContent = message;
     text.style.flex = '1';
 
-    // Кнопка закрытия
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '&times;';
     closeBtn.style.background = 'none';
@@ -70,19 +65,16 @@ export function showNotification(message, isError = true) {
     closeBtn.style.alignItems = 'center';
     closeBtn.style.justifyContent = 'center';
 
-    // Собираем уведомление
     notification.appendChild(icon);
     notification.appendChild(text);
     notification.appendChild(closeBtn);
     notificationContainer.appendChild(notification);
 
-    // Плавное появление
     setTimeout(() => {
         notification.style.opacity = '1';
         notification.style.transform = 'translateX(0)';
     }, 10);
 
-    // Функция для плавного закрытия
     const closeNotification = () => {
         notification.style.opacity = '0';
         notification.style.transform = 'translateX(-20px)';
@@ -90,23 +82,19 @@ export function showNotification(message, isError = true) {
             if (notification.parentNode) {
                 notification.remove();
             }
-            // Удаляем контейнер если нет уведомлений
             if (notificationContainer.children.length === 0) {
                 notificationContainer.remove();
             }
         }, 300);
     };
 
-    // Закрытие по кнопке
     closeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         closeNotification();
     });
 
-    // Автоматическое закрытие через 5 секунд
     const autoCloseTimeout = setTimeout(closeNotification, 5000);
 
-    // Закрытие по клику на уведомление (кроме кнопки закрытия)
     notification.addEventListener('click', (e) => {
         if (e.target !== closeBtn) {
             clearTimeout(autoCloseTimeout);

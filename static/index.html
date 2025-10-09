@@ -5,7 +5,6 @@
     <title>Лабораторная работа</title>
     <link rel="icon" href="./resources/favicon.ico" type="image/x-icon">
     <style>
-        /* Базовые стили */
         body {
             font-family: Arial, sans-serif;
             background-color: #f3f4f6;
@@ -14,7 +13,6 @@
             color: #333;
         }
 
-        /* Шапка */
         .header {
             background-color: #4a6fa5;
             color: white;
@@ -24,14 +22,12 @@
             font-size: 22px;
         }
 
-        /* Основная область */
         .main {
             display: flex;
             gap: 20px;
             padding: 20px;
         }
 
-        /* Левая панель с формой */
         .sidebar {
             width: 250px;
             background: #ffffff;
@@ -91,7 +87,6 @@
             background: #36527a;
         }
 
-        /* Правая часть */
         .content {
             flex: 1;
             display: flex;
@@ -107,7 +102,6 @@
             text-align: center;
         }
 
-        /* Таблица */
         #results {
             background: white;
             border: 1px solid #ddd;
@@ -138,7 +132,18 @@
             background: #e0e7ff;
         }
 
-        /* Футер */
+        .result-hit {
+            background-color: #c6f6d5; /* светло-зелёный */
+            color: #155724;            /* тёмно-зелёный текст */
+            font-weight: bold;
+        }
+
+        .result-miss {
+            background-color: #f8d7da; /* светло-красный */
+            color: #721c24;            /* тёмно-красный текст */
+            font-weight: bold;
+        }
+
         .footer {
             text-align: center;
             padding: 15px;
@@ -151,7 +156,6 @@
             border-radius: 8px;
         }
 
-        /* Псевдоэлементы */
         .header::after {
             content: " ";
             display: block;

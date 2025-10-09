@@ -47,23 +47,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    const rButtons = document.querySelectorAll('.RButtons button');
-    if (rButtons.length > 0) {
-        rButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                document.querySelectorAll('.RButtons button').forEach(btn => {
-                    btn.style.backgroundColor = '';
-                    btn.style.color = '';
-                });
-                this.style.backgroundColor = '#3fba16';
-                selectedR = parseFloat(this.getAttribute('data-value')); // число
-                document.getElementById('RChoice').value = selectedR;
-                saveFormDataToStorage();
-            });
-        });
-    }
-
-    // строгая проверка X
     const checkX = () => {
         return new Promise((resolve, reject) => {
             const selectedRadio = document.querySelector(".XButtons input[type=radio]:checked");
@@ -84,7 +67,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         })
     }
 
-    // строгая проверка Y
     const checkY = () => {
         return new Promise((resolve, reject) => {
             const yValue = document.getElementById("YChoice").value.trim();
@@ -119,7 +101,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         })
     }
 
-    // строгая проверка R
     const checkR = () => {
         return new Promise((resolve, reject) => {
             const rValue = document.getElementById("RChoice").value.trim();
@@ -194,11 +175,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             y: document.getElementById('YChoice').value,
             r: document.getElementById('RChoice').value
         };
-        localStorage.setItem('formData', JSON.stringify(formData)); // Изменено на localStorage
+        localStorage.setItem('formData', JSON.stringify(formData));
     }
 
     function loadFormDataFromStorage() {
-        const savedFormData = localStorage.getItem('formData'); // Изменено на localStorage
+        const savedFormData = localStorage.getItem('formData');
         if (savedFormData) {
             const formData = JSON.parse(savedFormData);
 
@@ -236,11 +217,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        localStorage.setItem('resultsTable', JSON.stringify(resultsData)); // Изменено на localStorage
+        localStorage.setItem('resultsTable', JSON.stringify(resultsData));
     }
 
     function loadResultsFromStorage() {
-        const savedData = localStorage.getItem('resultsTable'); // Изменено на localStorage
+        const savedData = localStorage.getItem('resultsTable');
         if (savedData) {
             const resultsData = JSON.parse(savedData);
             const tableBody = document.querySelector('#results-table tbody');

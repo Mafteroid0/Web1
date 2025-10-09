@@ -11,4 +11,4 @@ RUN mkdir /app
 WORKDIR /app
 COPY --from=build /home/gradle/src/build/libs/*.jar /app/app.jar
 # Уберите аргумент из ENTRYPOINT, он должен быть в CMD
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-DFCGI_PORT=1337", "-jar", "app.jar"]

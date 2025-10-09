@@ -43,16 +43,15 @@
     ctx.fillStyle = 'blue';
     ctx.fill();
     ctx.globalAlpha = 1;
-    //
-    //
-    //
+
+
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, centerY);
     ctx.lineTo(canvas.width, centerY);
     ctx.stroke();
-    //
+
     ctx.beginPath();
     ctx.moveTo(centerX, 0);
     ctx.lineTo(centerX, canvas.height);
