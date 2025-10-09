@@ -12,12 +12,19 @@ class Main {
     public static void main(String[] args) {
         // Устанавливаем порт через системное свойство (можно передать через аргументы)
         System.setProperty("FCGI_PORT", "1337");
+        Main server = new Main();
+        server.run();
 
+
+        System.out.println("Starting FastCGI server...");
+
+
+    }
+
+    private void run(){
         FCGIInterface fcgiInterface = new FCGIInterface();
         Validator validator = new Validator();
         HitChecker checker = new HitChecker();
-
-        System.out.println("Starting FastCGI server...");
 
         while (true) {
             try {
@@ -40,12 +47,12 @@ class Main {
                     long time = System.nanoTime();
                     String req = FCGIInterface.request.params.getProperty("QUERY_STRING");
 
-                    if (req == null || req.equals("")) {
+                    if (req == null || req.isEmpty()) {
                         sendError("Запрос Пустой!");
                         continue;
                     }
 
-                    LinkedHashMap<String, String> m = null;
+                    LinkedHashMap<String, String> m;
                     try {
                         m = getValues(req);
                     } catch (Exception e) {
@@ -59,9 +66,25 @@ class Main {
                         if (m.size() != 3) {
                             throw new RuntimeException("Проверьте, что в вашем запросе только x,y,r");
                         }
-                        isValid = validator.validation(Float.parseFloat(m.get("x")), Float.parseFloat(m.get("y")),
-                                Float.parseFloat(m.get("r")));
-                        isShot = checker.hit(Float.parseFloat(m.get("x")), Float.parseFloat(m.get("y")), Float.parseFloat(m.get("r")));
+
+                        String xStr = m.get("x");
+                        String yStr = m.get("y");
+                        String rStr = m.get("r");
+
+                        // Валидация через Validator
+                        String validationError = validator.validate(xStr, yStr, rStr);
+                        if (validationError != null) {
+                            throw new RuntimeException(validationError);
+                        }
+
+                        // Конвертируем в float для checker.hit()
+                        float x = Float.parseFloat(xStr);
+                        float y = Float.parseFloat(yStr);
+                        float r = Float.parseFloat(rStr);
+
+                        isValid = true;
+                        isShot = checker.hit(x, y, r);
+
                     } catch (NumberFormatException e) {
                         sendError("В данных обнаружены недопустимые символы");
                         continue;
@@ -75,11 +98,7 @@ class Main {
 
                     if (isValid) {
                         sendResponse(isShot, m.get("x"), m.get("y"), m.get("r"), time);
-                    } else {
-                        sendError("Невалидные данные!");
                     }
-                } else {
-                    sendError("Данные должны отправляться GET запросом!");
                 }
 
             } catch (InterruptedException e) {
@@ -97,16 +116,50 @@ class Main {
         }
     }
 
-    private LinkedHashMap<String, String> getValues(String inpString) {
-        String[] args = inpString.split("&");
-        LinkedHashMap<String, String> map = new LinkedHashMap<>();
-        for (String s : args) {
-            String[] arg = s.split("=");
-            if (arg.length == 2) {
-                map.put(arg[0], arg[1]);
+
+    private boolean isSimpleValidNumber(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+
+        // Проверяем базовый формат числа
+        if (!value.matches("-?\\d+(\\.\\d+)?")) {
+            return false;
+        }
+
+        // Отсекаем значения вроде 4.000000000000000000000000001
+        // Если после точки больше 6 знаков - считаем избыточной точностью
+        if (value.contains(".")) {
+            String decimalPart = value.split("\\.")[1];
+            if (decimalPart.length() > 6) {
+                return false;
             }
         }
-        return map;
+
+        return true;
+    }
+
+    private LinkedHashMap<String, String> getValues(String queryString) throws Exception {
+        LinkedHashMap<String, String> params = new LinkedHashMap<>();
+        String[] pairs = queryString.split("&");
+
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("=");
+            if (keyValue.length == 2) {
+                String key = keyValue[0];
+                String value = keyValue[1]; // Просто берем значение как есть
+
+                params.put(key, value);
+            }
+        }
+
+        return params;
+    }
+
+    private boolean isValidNumberFormat(String value) {
+        // Разрешаем: целые числа, числа с плавающей точкой, отрицательные числа
+        // Запрещаем: научную нотацию, ведущие нули, избыточную точность
+        return value.matches("-?(?:0|[1-9]\\d*)(?:\\.\\d{1,15})?");
     }
 
     private void sendResponse(boolean isShoot, String x, String y, String r, long wt) {

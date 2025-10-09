@@ -194,11 +194,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             y: document.getElementById('YChoice').value,
             r: document.getElementById('RChoice').value
         };
-        sessionStorage.setItem('formData', JSON.stringify(formData));
+        localStorage.setItem('formData', JSON.stringify(formData)); // Изменено на localStorage
     }
 
     function loadFormDataFromStorage() {
-        const savedFormData = sessionStorage.getItem('formData');
+        const savedFormData = localStorage.getItem('formData'); // Изменено на localStorage
         if (savedFormData) {
             const formData = JSON.parse(savedFormData);
 
@@ -236,11 +236,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        sessionStorage.setItem('resultsTable', JSON.stringify(resultsData));
+        localStorage.setItem('resultsTable', JSON.stringify(resultsData)); // Изменено на localStorage
     }
 
     function loadResultsFromStorage() {
-        const savedData = sessionStorage.getItem('resultsTable');
+        const savedData = localStorage.getItem('resultsTable'); // Изменено на localStorage
         if (savedData) {
             const resultsData = JSON.parse(savedData);
             const tableBody = document.querySelector('#results-table tbody');

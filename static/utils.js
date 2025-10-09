@@ -42,17 +42,11 @@ export function showNotification(message, isError = true) {
 
     // Указываем локальные пути к картинкам
     if (isError) {
-        icon.alt = 'Ошибка';
-        // Если картинки нет, создаем простую SVG иконку как fallback
-        icon.onerror = function() {
-            this.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e53e3e'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E";
-        };
+        icon.alt = "Ошибка";
+        icon.src = "./resources/error.webp";
     } else {
-        icon.alt = 'Успех';
-        // Fallback для успешного уведомления
-        icon.onerror = function() {
-            this.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338a169'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/%3E%3C/svg%3E";
-        };
+        icon.alt = "Успех";
+        icon.src = "./resources/success.webp";
     }
 
     // Создаем текст
