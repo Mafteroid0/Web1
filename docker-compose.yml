@@ -5,7 +5,6 @@ services:
       dockerfile: Dockerfile
     networks:
       backend:
-    # Явно указываем hostname для корректного разрешения имени
     hostname: fcgi
 
   httpd:
@@ -17,7 +16,6 @@ services:
       - "./static:/var/www"
     networks:
       backend:
-    # Добавляем зависимость
     depends_on:
       - fcgi
 

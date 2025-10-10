@@ -2,11 +2,9 @@ package ru.mafteroid;
 
 import com.fastcgi.FCGIInterface;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
-import java.util.Objects;
 
 class Main {
     public static void main(String[] args) {
