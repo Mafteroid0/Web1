@@ -23,16 +23,11 @@ class Main {
     private ParameterParser<BigDecimal[]> putRParser;
     private Validator validator;
     private HitChecker checker;
-    private volatile boolean running = true;
 
     public static void main(String[] args) {
         Main server = new Main();
         System.out.println("Starting FastCGI server...");
         server.run();
-    }
-
-    public void stop() {
-        running = false;
     }
 
     private void initialize() {
@@ -42,16 +37,13 @@ class Main {
     }
 
     private void initializeParsers() {
-        // GET парсер для /calculate с цепочкой декораторов
         ParameterParser<LinkedHashMap<String, String>> baseGetParser = new QueryStringParser();
         ParameterParser<LinkedHashMap<String, String>> injectionCheckedParser = new InjectionCheckDecorator(baseGetParser);
         this.getParser = new QueryStringValidationDecorator(injectionCheckedParser);
 
-        // PUT парсер для /validX с декоратором валидации
         ParameterParser<Set<BigDecimal>> basePutXParser = new JsonArrayParser();
         this.putXParser = new JsonArrayValidationDecorator(basePutXParser);
 
-        // PUT парсеры для /validY и /validR с декораторами валидации
         ParameterParser<BigDecimal[]> baseRangeParser = new JsonRangeParser();
         this.putYParser = new RangeValidationDecorator(baseRangeParser);
         this.putRParser = new RangeValidationDecorator(baseRangeParser);
@@ -63,15 +55,28 @@ class Main {
 
         while (fcgiInterface.FCGIaccept() >= 0) {
             try {
-
                 String method = FCGIInterface.request.params.getProperty("REQUEST_METHOD");
                 if (method == null) {
                     sendError("Неподдерживаемый метод HTTP");
                     continue;
                 }
 
+                String path = FCGIInterface.request.params.getProperty("REQUEST_URI");
+                if (path == null) {
+                    sendError("Неизвестный endpoint");
+                    continue;
+                }
+
+                String cleanPath = normalizePath(path);
+
                 if ("GET".equals(method)) {
-                    processGetRequest();
+                    if ("/calculate".equals(cleanPath)) {
+                        processGetRequest();
+                    } else if ("/validx".equals(cleanPath) || "/validy".equals(cleanPath) || "/validr".equals(cleanPath)) {
+                        processGetValidationRequest();
+                    } else {
+                        sendError("Unknown endpoint: " + cleanPath, 404);
+                    }
                 } else if ("PUT".equals(method)) {
                     processPutRequest();
                 } else {
@@ -82,6 +87,18 @@ class Main {
                 handleException(e);
             }
         }
+    }
+
+    private String normalizePath(String path) {
+        if (path == null) return "";
+
+        String cleanPath = path.split("\\?")[0];
+
+        if (cleanPath.endsWith("/") && cleanPath.length() > 1) {
+            cleanPath = cleanPath.substring(0, cleanPath.length() - 1);
+        }
+
+        return cleanPath.toLowerCase();
     }
 
     private void processGetRequest() {
@@ -99,37 +116,43 @@ class Main {
         } catch (IllegalArgumentException e) {
             sendError(e.getMessage());
         } catch (Exception e) {
-            sendError("Ошибка обработки запроса " + e);
+            sendError("Ошибка обработки запроса " + e.getMessage());
         }
     }
 
     private void processPutRequest() {
         String path = FCGIInterface.request.params.getProperty("REQUEST_URI");
+        if (path == null) {
+            sendError("Неизвестный endpoint");
+            return;
+        }
+
+        String cleanPath = normalizePath(path);
         String body = readRequestBody();
 
-        if (body.isEmpty()) {
+        if (body == null || body.isEmpty()) {
             sendError("Тело запроса пустое");
             return;
         }
 
         try {
-            if ("/validX".equals(path)) {
+            if ("/validx".equals(cleanPath)) {
                 Set<BigDecimal> values = putXParser.parse(body);
                 validator.setValidX(values);
                 sendSuccess("Допустимые значения X обновлены: " + values);
 
-            } else if ("/validY".equals(path)) {
+            } else if ("/validy".equals(cleanPath)) {
                 BigDecimal[] range = putYParser.parse(body);
                 validator.setValidYRange(range[0], range[1]);
                 sendSuccess(String.format("Допустимый диапазон Y обновлен: [%s, %s]", range[0], range[1]));
 
-            } else if ("/validR".equals(path)) {
+            } else if ("/validr".equals(cleanPath)) {
                 BigDecimal[] range = putRParser.parse(body);
                 validator.setValidRRange(range[0], range[1]);
                 sendSuccess(String.format("Допустимый диапазон R обновлен: [%s, %s]", range[0], range[1]));
 
             } else {
-                sendError("Неизвестный endpoint: " + path, 404);
+                sendError("Неизвестный endpoint: " + cleanPath, 404);
             }
 
         } catch (IllegalArgumentException e) {
@@ -137,6 +160,78 @@ class Main {
         } catch (Exception e) {
             sendError("Ошибка обработки PUT запроса");
         }
+    }
+
+    private void processGetValidationRequest() {
+        String path = FCGIInterface.request.params.getProperty("REQUEST_URI");
+        if (path == null) {
+            sendError("Неизвестный endpoint");
+            return;
+        }
+        String cleanPath = normalizePath(path);
+
+        try {
+            if ("/validx".equals(cleanPath)) {
+                sendValidationXResponse();
+            } else if ("/validy".equals(cleanPath)) {
+                sendValidationYResponse();
+            } else if ("/validr".equals(cleanPath)) {
+                sendValidationRResponse();
+            } else {
+                sendError("Unknown endpoint: " + cleanPath, 404);
+            }
+        } catch (Exception e) {
+            sendError("Error processing validation request", 500);
+        }
+    }
+
+    private void sendValidationXResponse() {
+        Set<BigDecimal> validX = validator.getValidX();
+        StringBuilder xArray = new StringBuilder();
+        boolean first = true;
+        for (BigDecimal value : validX) {
+            if (!first) {
+                xArray.append(", ");
+            }
+            xArray.append("\"").append(value.toString()).append("\"");
+            first = false;
+        }
+
+        String content = """
+                {"validX": [%s]}
+                """.formatted(xArray.toString());
+
+        System.out.println("Content-Type: application/json; charset=utf-8");
+        System.out.println("Status: 200 OK");
+        System.out.println();
+        System.out.println(content);
+        System.out.flush();
+    }
+
+    private void sendValidationYResponse() {
+        BigDecimal[] range = validator.getValidYRange();
+        String content = """
+                {"range": [%s, %s]}
+                """.formatted(range[0], range[1]);
+
+        System.out.println("Content-Type: application/json; charset=utf-8");
+        System.out.println("Status: 200 OK");
+        System.out.println();
+        System.out.println(content);
+        System.out.flush();
+    }
+
+    private void sendValidationRResponse() {
+        BigDecimal[] range = validator.getValidRRange();
+        String content = """
+                {"range": [%s, %s]}
+                """.formatted(range[0], range[1]);
+
+        System.out.println("Content-Type: application/json; charset=utf-8");
+        System.out.println("Status: 200 OK");
+        System.out.println();
+        System.out.println(content);
+        System.out.flush();
     }
 
     private void processCoordinates(String x, String y, String r) {
@@ -203,11 +298,6 @@ class Main {
 
     private void handleException(Exception e) {
         e.printStackTrace();
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-        }
     }
 
     private void sendResponse(boolean isShoot, String x, String y, String r, long wt) {

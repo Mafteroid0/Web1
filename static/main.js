@@ -5,10 +5,125 @@ document.addEventListener('DOMContentLoaded', async () => {
     let selectedX = NaN;
     let selectedY = NaN;
     let selectedR = NaN;
-    const xstorage = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+    let xstorage = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
+    let yRange = [-5, 3];
+    let rRange = [1, 4];
 
+    await loadValidationRules();
     loadResultsFromStorage();
     loadFormDataFromStorage();
+
+    async function loadValidationRules() {
+        try {
+            const xResponse = await fetch('/validX', { method: 'GET' });
+            if (xResponse.ok) {
+                const xData = await xResponse.json();
+                if (xData.validX) {
+                    xstorage = xData.validX.map(x => parseFloat(x));
+                    updateXButtons(xstorage);
+                }
+            }
+
+            const yResponse = await fetch('/validY', { method: 'GET' });
+            if (yResponse.ok) {
+                const yData = await yResponse.json();
+                if (yData.range) {
+                    yRange = yData.range.map(y => parseFloat(y));
+                    updateYInput(yRange);
+                }
+            }
+
+            const rResponse = await fetch('/validR', { method: 'GET' });
+            if (rResponse.ok) {
+                const rData = await rResponse.json();
+                if (rData.range) {
+                    rRange = rData.range.map(r => parseFloat(r));
+                    updateRInput(rRange);
+                }
+            }
+
+        } catch (error) {
+            showNotification("Используются значения по умолчанию", true);
+        }
+    }
+
+    function updateXButtons(validX) {
+        const xButtonsContainer = document.querySelector('.XButtons');
+        if (!xButtonsContainer) {
+            return;
+        }
+
+        xButtonsContainer.innerHTML = '';
+
+        const sortedX = [...validX].sort((a, b) => a - b);
+
+        sortedX.forEach(xValue => {
+            const radioId = `x-${xValue}`;
+
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.id = radioId;
+            radio.name = 'XChoice';
+            radio.value = xValue.toString();
+
+            const label = document.createElement('label');
+            label.htmlFor = radioId;
+            label.textContent = xValue.toString();
+
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    selectedX = parseFloat(this.value);
+                    saveFormDataToStorage();
+                }
+            });
+
+            xButtonsContainer.appendChild(radio);
+            xButtonsContainer.appendChild(label);
+        });
+
+
+        if (!isNaN(selectedX) && validX.includes(selectedX)) {
+            const radioToCheck = document.querySelector(`.XButtons input[value="${selectedX}"]`);
+            if (radioToCheck) {
+                radioToCheck.checked = true;
+            }
+        }
+    }
+
+    function updateYInput(range) {
+        const yInput = document.getElementById('YChoice');
+        if (!yInput) {
+            return;
+        }
+
+        yInput.placeholder = `[${range[0]} ... ${range[1]}]`;
+        yInput.title = `Y должен быть от ${range[0]} до ${range[1]}`;
+
+        const currentY = parseFloat(yInput.value);
+        if (!isNaN(currentY) && (currentY < range[0] || currentY > range[1])) {
+            yInput.value = '';
+            selectedY = NaN;
+            saveFormDataToStorage();
+        }
+
+    }
+
+    function updateRInput(range) {
+        const rInput = document.getElementById('RChoice');
+        if (!rInput) {
+            return;
+        }
+
+        rInput.placeholder = `[${range[0]} ... ${range[1]}]`;
+        rInput.title = `R должен быть от ${range[0]} до ${range[1]}`;
+
+        const currentR = parseFloat(rInput.value);
+        if (!isNaN(currentR) && (currentR < range[0] || currentR > range[1])) {
+            rInput.value = '';
+            selectedR = NaN;
+            saveFormDataToStorage();
+        }
+    }
 
     function setupInputValidation() {
         const yInput = document.getElementById('YChoice');
@@ -38,15 +153,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     setupInputValidation()
 
-    document.querySelectorAll('.XButtons input[type="radio"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.checked) {
-                selectedX = parseFloat(this.value);
-                saveFormDataToStorage();
-            }
-        });
-    });
-
     const checkX = () => {
         return new Promise((resolve, reject) => {
             const selectedRadio = document.querySelector(".XButtons input[type=radio]:checked");
@@ -59,8 +165,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const input = selectedRadio.value.trim();
             selectedX = parseFloat(input);
 
-            if (!xstorage.includes(selectedX) || !/^(-?[0-4])(\.0+)?$/.test(input)) {
-                reject("Неверное значение X");
+            if (!xstorage.includes(selectedX)) {
+                reject(`Неверное значение X. Допустимые: [${xstorage.join(', ')}]`);
             } else {
                 resolve();
             }
@@ -83,17 +189,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             selectedY = parseFloat(yValue);
 
-            if (selectedY < -5 || selectedY > 3 || isNaN(selectedY)) {
-                reject("Неверное значение Y. Допустимый диапазон: от -5 до 3");
+            if (selectedY < yRange[0] || selectedY > yRange[1] || isNaN(selectedY)) {
+                reject(`Неверное значение Y. Допустимый диапазон: от ${yRange[0]} до ${yRange[1]}`);
                 return;
             }
 
-            if (selectedY === 3 && !/^3(\.0+)?$/.test(yValue)) {
-                reject("Y не должен превышать 3");
+            if (selectedY === yRange[1] && !new RegExp(`^${yRange[1]}(\\.0+)?$`).test(yValue)) {
+                reject(`Y не должен превышать ${yRange[1]}`);
                 return;
             }
-            if (selectedY === -5 && !/^-5(\.0+)?$/.test(yValue)) {
-                reject("Y не должен быть меньше -5");
+            if (selectedY === yRange[0] && !new RegExp(`^${yRange[0]}(\\.0+)?$`).test(yValue)) {
+                reject(`Y не должен быть меньше ${yRange[0]}`);
                 return;
             }
 
@@ -117,17 +223,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             selectedR = parseFloat(rValue);
 
-            if (selectedR < 1 || selectedR > 4 || isNaN(selectedR)) {
-                reject("Неверное значение R. Допустимый диапазон: от 1 до 4");
+            if (selectedR < rRange[0] || selectedR > rRange[1] || isNaN(selectedR)) {
+                reject(`Неверное значение R. Допустимый диапазон: от ${rRange[0]} до ${rRange[1]}`);
                 return;
             }
 
-            if (selectedR === 4 && !/^4(\.0+)?$/.test(rValue)) {
-                reject("R не должен превышать 4");
+            if (selectedR === rRange[1] && !new RegExp(`^${rRange[1]}(\\.0+)?$`).test(rValue)) {
+                reject(`R не должен превышать ${rRange[1]}`);
                 return;
             }
-            if (selectedR === 1 && !/^1(\.0+)?$/.test(rValue)) {
-                reject("R не должен быть меньше 1");
+            if (selectedR === rRange[0] && !new RegExp(`^${rRange[0]}(\\.0+)?$`).test(rValue)) {
+                reject(`R не должен быть меньше ${rRange[0]}`);
                 return;
             }
 
@@ -164,7 +270,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return data;
             })
             .catch(error => {
-                console.error(error)
                 throw `Что-то пошло не так. Попробуйте позже. ${error}`;
             });
     }

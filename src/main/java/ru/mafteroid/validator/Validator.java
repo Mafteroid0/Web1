@@ -90,4 +90,25 @@ public class Validator {
             return "Ошибка обработки R";
         }
     }
+
+    public Set<BigDecimal> getValidX() {
+        return new HashSet<>(validX);
+    }
+
+    public BigDecimal[] getValidYRange() {
+        return new BigDecimal[]{minY, maxY};
+    }
+
+    public BigDecimal[] getValidRRange() {
+        return new BigDecimal[]{minR, maxR};
+    }
+
+
+    public float[] getValidYRangeAsFloats() {
+        return new float[]{minY.floatValue(), maxY.floatValue()};
+    }
+
+    public float[] getValidRRangeAsFloats() {
+        return new float[]{minR.floatValue(), maxR.floatValue()};
+    }
 }
