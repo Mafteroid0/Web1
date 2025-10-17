@@ -1,4 +1,4 @@
-package ru.mafteroid;
+package ru.mafteroid.validator;
 
 public class HitChecker {
     public boolean hit(float x, float y, float r) {
